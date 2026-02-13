@@ -51,7 +51,7 @@ struct MapView: View {
     let tileSize: CGFloat
     let spriteCache: [TerrainType: UIImage]
     
-    init(mapGrid: MapGrid, tileSize: CGFloat = 32) {
+    init(mapGrid: MapGrid, tileSize: CGFloat = 24) {
         self.mapGrid = mapGrid
         self.tileSize = tileSize
         self.spriteCache = SpriteManager.shared.getSprites(tileSize: tileSize)
