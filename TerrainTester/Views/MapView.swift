@@ -1,5 +1,50 @@
 import SwiftUI
 
+/// Manages sprite loading and caching for the entire app
+class SpriteManager {
+    static let shared = SpriteManager()
+    private var cache: [CGFloat: [TerrainType: UIImage]] = [:]
+    
+    private init() {}
+    
+    func getSprites(tileSize: CGFloat) -> [TerrainType: UIImage] {
+        // Return cached sprites if available
+        if let cachedSprites = cache[tileSize] {
+            return cachedSprites
+        }
+        
+        // Try to load sprite sheet, fall back to placeholder sprites
+        let spriteSheet = SpriteSheet(
+            imageName: "terrain_spritesheet",
+            tileSize: CGSize(width: tileSize, height: tileSize),
+            tilesPerRow: 4
+        )
+        
+        let sprites: [TerrainType: UIImage]
+        if let spriteSheet = spriteSheet {
+            // Load sprites from sprite sheet
+            var loadedSprites: [TerrainType: UIImage] = [:]
+            for terrainType in TerrainType.allCases {
+                if let sprite = spriteSheet.getTileForTerrain(terrainType) {
+                    loadedSprites[terrainType] = sprite
+                }
+            }
+            sprites = loadedSprites.isEmpty ? 
+                SpriteSheet.getPlaceholderSprites(tileSize: CGSize(width: tileSize, height: tileSize)) : 
+                loadedSprites
+        } else {
+            // Use placeholder sprites
+            sprites = SpriteSheet.getPlaceholderSprites(
+                tileSize: CGSize(width: tileSize, height: tileSize)
+            )
+        }
+        
+        // Cache the sprites
+        cache[tileSize] = sprites
+        return sprites
+    }
+}
+
 /// SwiftUI view that renders the 2D tile-based map using sprites
 struct MapView: View {
     @ObservedObject var mapGrid: MapGrid
@@ -9,31 +54,7 @@ struct MapView: View {
     init(mapGrid: MapGrid, tileSize: CGFloat = 32) {
         self.mapGrid = mapGrid
         self.tileSize = tileSize
-        
-        // Try to load sprite sheet, fall back to placeholder sprites
-        let spriteSheet = SpriteSheet(
-            imageName: "terrain_spritesheet",
-            tileSize: CGSize(width: tileSize, height: tileSize),
-            tilesPerRow: 4
-        )
-        
-        if let spriteSheet = spriteSheet {
-            // Load sprites from sprite sheet
-            var cache: [TerrainType: UIImage] = [:]
-            for terrainType in TerrainType.allCases {
-                if let sprite = spriteSheet.getTileForTerrain(terrainType) {
-                    cache[terrainType] = sprite
-                }
-            }
-            self.spriteCache = cache.isEmpty ? 
-                SpriteSheet.getPlaceholderSprites(tileSize: CGSize(width: tileSize, height: tileSize)) : 
-                cache
-        } else {
-            // Use placeholder sprites
-            self.spriteCache = SpriteSheet.getPlaceholderSprites(
-                tileSize: CGSize(width: tileSize, height: tileSize)
-            )
-        }
+        self.spriteCache = SpriteManager.shared.getSprites(tileSize: tileSize)
     }
     
     var body: some View {

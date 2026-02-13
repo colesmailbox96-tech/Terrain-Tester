@@ -35,7 +35,7 @@ class TerrainGenerator {
     }
     
     /// Generate terrain with simple noise-like clustering
-    static func generateClusteredTerrain(width: Int, height: Int, seed: Int = 0) -> MapGrid {
+    static func generateClusteredTerrain(width: Int, height: Int) -> MapGrid {
         let map = MapGrid(width: width, height: height)
         
         // Create some water bodies
